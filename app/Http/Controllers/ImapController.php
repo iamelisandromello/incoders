@@ -69,6 +69,17 @@ class ImapController extends Controller
       ));
    }
 
+   private function isLine($line, $field)
+   {
+      $lenght = strlen($field);
+
+      if (Str::startsWith($line, $field)) {
+         return [Str::slug($field) => trim(Str::substr($line, $lenght + 1))];
+      }
+
+      return [];
+   }
+
    public function email()
    {
       $email = '
@@ -86,22 +97,22 @@ class ImapController extends Controller
       $data = (new Collection(explode("\n", $email)))->mapWithKeys(function ($line) {
          $line = trim($line);
 
-         if (Str::startsWith($line, 'Nome:')) {
-            return ['nome' => Str::substr($line, 6)];
+         if ($name = $this->isLine($line, 'Nome')) {
+            return $name;
          } 
          
-         if (Str::startsWith($line, 'Endereço:')) {
-            return ['endereco' => Str::substr($line, 11)];
-         }
-
-         if (Str::startsWith($line, 'Valor:')) {
-            return ['valor' => Str::substr($line, 7)];
-         }
-
-         if (Str::startsWith($line, 'Vencimento:')) {
-            return ['vencimento' => Str::substr($line, 12)];
-         }
-
+         if ($address = $this->isLine($line, 'Endereço')) {
+            return $address;
+         } 
+         
+         if ($value = $this->isLine($line, 'Valor')) {
+            return $value;
+         } 
+         
+         if ($vencto = $this->isLine($line, 'Vencimento')) {
+            return $vencto;
+         } 
+      
          return [];
       })->filter()->toArray();
 
