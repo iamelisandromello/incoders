@@ -1,86 +1,83 @@
 <?php
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use App\Jobs\PostInvoiceJob;
+use App\Contracts\InvoiceService;
+use App\Services\EmailExtratorService;
+use App\Services\ImapConnectionService;
 use Webklex\IMAP\Client;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 class ImapController extends Controller
 {
-   public function signin()
+   public function signin(EmailExtratorService $serviceExtrator, ImapConnectionService $serviceConnection)
    {
-      if (session_status() == PHP_SESSION_NONE) {
-      session_start();
+      if (session_status() == PHP_SESSION_NONE)
+      {
+         session_start();
       }
 
-      $oClient = new Client([
-         'host'          => 'mail.elisandromello.com.br',
-         'port'          => 993,
-         'encryption'    => 'ssl',
-         'validate_cert' => true,
-         'username'      => 'iam@elisandromello.com.br',
-         'password'      => '@S3curi7y',
-         'protocol'      => 'imap'
-      ]);
-      /* Alternative by using the Facade
-      $oClient = Webklex\IMAP\Facades\Client::account('default');
-      */
+      //Requisição de Serviço para conectar Caixa postal via IMAP
+      $oClient = $serviceConnection->connectionImap();
 
-
-      //Connect to the IMAP Server
-      $oClient->connect();
-
-      //Get all Mailboxes
-      /** @var \Webklex\IMAP\Support\FolderCollection $aFolder */
+      //Obter todas as pastas de correio
       $aFolder = $oClient->getFolders();
 
-      //Loop through every Mailbox
-      /** @var \Webklex\IMAP\Folder $oFolder */
-      foreach($aFolder as $oFolder){
+      //Percorrer todas as pastas de correio
+      foreach($aFolder as $oFolder)
+      {
 
-         //Get all Messages of the current Mailbox $oFolder
-         /* @var \Webklex\IMAP\Support\MessageCollection $aMessage */
+         //Obter todas as mensagens da pasta Mailbox atual
          $aMessage = $oFolder->messages()->all()->get();         
          $i = 0;
+         $l = 0;
 
-         /* @var \Webklex\IMAP\Message $oMessage */
-         foreach($aMessage as $oMessage){
-            /*echo $oMessage->getSubject().'<br />';
+         foreach($aMessage as $oMessage)
+         {
+            
+            //Captura o conteudo corpo do e-mail
+            $content = $oMessage->getTextBody(true);
+            //Requisição de Serviço para realizar o tratamento dos dados do e-mail
+            $data[$l] = $serviceExtrator->extract($content);
+            $l++;
+            
+            // Estudar Jobs
+            //dispatch(new PostInvoiceJob($data));
+
+            /*
             echo 'Attachments: '.$oMessage->getAttachments()->count().'<br />';
-            echo $oMessage->getHTMLBody(true);*/
-                  $i++;
-                  $marks[$i] = array('nome' => $oMessage->getFrom()[0]->mail, 'assunto' => $oMessage->getSubject(), 'body' => $oMessage->getHTMLBody(true));
-                  /*$sumario["nome"]		= $oMessage->getFrom()[0]->mail;
-                  $sumario["assunto"]	= $oMessage->getSubject();            
-                  $sumario["body"]		= $oMessage->getHTMLBody(true);*/   
+            */
+            
+            $i++;
+            $marks[$i] = array(
+               'nome'         => $oMessage->getFrom()[0]->mail,
+               'assunto'      => $oMessage->getSubject(),
+               'dateReceived' => $oMessage->getDate()->format(DATE_RFC2822),
+               'data'         => $data
+            ); 
 
-            //Move the current Message to 'INBOX.read'
+            //Mova a mensagem atual para 'Emails Lidos'
             /*if($oMessage->moveToFolder('INBOX.read') == true){
                   echo 'Message has ben moved';
             }else{
-                  echo 'Message could not be moved';
+                  echo 'Não foi possível mover a mensagem';
             }*/
          }
       }
 
+      for ($i=0; $i < count($data); $i++) { 
+         $dataRow[$i] = implode("|", $data[$i]);
+      }
+
       return view('mail', array(
-         'userSummaries' => $marks
+         'userSummaries'   => $marks,
+         'data'            => $data,
+         'dataRow'         => $dataRow,
       ));
    }
 
-   private function isLine($line, $field)
-   {
-      $lenght = strlen($field);
-
-      if (Str::startsWith($line, $field)) {
-         return [Str::slug($field) => trim(Str::substr($line, $lenght + 1))];
-      }
-
-      return [];
-   }
-
-   public function email()
+   public function email(EmailExtratorService $extrator)
    {
       $email = '
       Bom dia,
@@ -94,28 +91,69 @@ class ImapController extends Controller
       Att.
       ';
 
-      $data = (new Collection(explode("\n", $email)))->mapWithKeys(function ($line) {
-         $line = trim($line);
+      $data = $extrator->extract($email);
 
-         if ($name = $this->isLine($line, 'Nome')) {
-            return $name;
-         } 
-         
-         if ($address = $this->isLine($line, 'Endereço')) {
-            return $address;
-         } 
-         
-         if ($value = $this->isLine($line, 'Valor')) {
-            return $value;
-         } 
-         
-         if ($vencto = $this->isLine($line, 'Vencimento')) {
-            return $vencto;
-         } 
-      
-         return [];
-      })->filter()->toArray();
+      dispatch(new PostInvoiceJob($data));
 
       dd($data);
    }
+
+
+   public function send()
+   {
+      dd('entrou no controller');
+      $email = '
+      Bom dia,
+      Segue meus dados de contato e informações para pagamento 
+      
+      Nome: Guarida Imóveis
+      Endereço: Protásio alves, 1309
+      Valor: R$ 1.800,50
+      Vencimento:12/19
+      
+      Att.
+      ';
+
+      $data = $extrator->extract($email);
+      dispatch(new PostInvoiceJob($data));
+      dd($data);
+   }
+
+
+   /**
+   * Create a new controller instance.
+   *
+   * @return void
+   */
+   public function ajaxRequest()
+   {
+      return view('ajaxRequest');
+   }
+
+   
+
+   /**
+   * Create a new controller instance.
+   *
+   * @return void
+   */
+   public function ajaxRequestPost(EmailExtratorService $serviceExtrator, Request $request)
+   {
+      /*echo("ajaxrequestpost");
+      die;*/
+      $input = $request->all();
+
+      $data = $extrator->extract($input);
+
+      dd($data);
+      dispatch(new PostInvoiceJob($data));
+
+      dd($input);
+      $response = array(
+         'status' => 'success',
+         'msg'    => 'Setting created successfully',
+      );
+      return response()->json(['success'=>'Got Simple Ajax Request.']);
+   }
+
 }

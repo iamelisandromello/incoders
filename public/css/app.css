@@ -1,0 +1,9 @@
+body {
+   padding-top: 70px;
+   padding-bottom: 30px;
+ }
+
+ .t-right{
+   text-align: right;
+   float: right;
+ }
