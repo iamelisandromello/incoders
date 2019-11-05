@@ -1,9 +1,192 @@
-body {
-   padding-top: 70px;
-   padding-bottom: 30px;
+body 
+{
+   padding-top    : 70px;
+   padding-bottom : 30px;
  }
 
- .t-right{
-   text-align: right;
-   float: right;
+ .t-right
+ {
+   text-align : right;
+   float      : right;
  }
+
+/***************************************
+Alertas
+***************************************/
+#capaefectos 
+{
+  margin-top  : 100px;
+}
+
+.alert 
+{
+  font-size   : 0.9375rem;
+}
+
+.alert-primary 
+{
+  color             : #fff;
+  background-color  : rgba(75,0,130,0.5);
+  border-color      : #e68ea5;
+  font-size         : 14px;
+}
+
+.alert 
+{
+  position          : relative;
+  padding           : 0.75rem 1.25rem;
+  margin-bottom     : 1rem;
+  border            : 1px solid transparent;
+  border-radius     : 3px;
+}
+.alert 
+{
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+/***************************************
+Personalização PopUp de aviso
+***************************************/
+* 
+{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Open-Sans', sans-serif;
+}
+
+.trigger_notify_box
+{
+  position: fixed;
+  top: 70px;
+  right: 0;
+  width: 320px;
+  max-width: 90%;
+  padding-top: 15px;
+  padding-right: 15px;
+  z-index: 100;
+}
+
+.trigger_notify_timer
+{
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4%;
+  background: rgba(0,0,0,0.5);
+}
+
+.trigger_notify
+{
+  position: relative;
+  padding: 20px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+  overflow: hidden;
+  margin-bottom: 15px;
+}
+
+.trigger_notify_blue 
+{
+  background-color: #008EC0;
+  color: #FFF;
+}
+
+.trigger_notify_green 
+{
+  background-color: forestgreen;
+  color: #FFF;
+}
+
+.trigger_notify_purple 
+{
+  background-color: #a020f0;
+  color: #FFF;
+}
+
+/*
+*PROFILEIT MODAL BOX
+*box confirm
+*/
+.profile_confirm 
+{
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  z-index: 1051 /*83*/;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.up_confirm
+{
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  z-index: 83;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.up_confirm_box 
+{
+  width: 400px;
+  max-width: 90%;
+  margin: auto;
+  position: relative;
+  top: -100px;
+  opacity: 0;
+}
+
+.up_confirm_box_content 
+{
+  background: #fff;
+  padding: 30px;
+  text-align: center;
+  position: relative;
+  border-radius: 4px 4px 0 0;
+  -moz-border-radius: 4px 4px 0 0;
+  -webkit-border-radius: 4px 4px 0 0;
+}
+
+.up_confirm_box_content p
+{
+  margin-top: 10px
+}
+
+.up_confirm_box_content_icon
+{
+  position: absolute;
+  bottom: 110%;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 3em;
+  color: #fff;
+  text-shadow: 0 1px #000;
+}
+
+.up_confirm_box_action
+{
+  padding: 20px;
+  text-align: center;
+  background: #eee;
+  border-radius: 0 0 4px 4px;
+  -moz-border-radius: 0 0 4px 4px;
+  -webkit-border-radius: 0 0 4px 4px;
+}
+
+.up_confirm_box_action .btn
+{
+  margin: 0 10px 
+}

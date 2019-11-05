@@ -34,4 +34,5 @@ class PostInvoiceJob implements ShouldQueue
     {
         $service->postInvoice($this->data);
     }
+    
 }

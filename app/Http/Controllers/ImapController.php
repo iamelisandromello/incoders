@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use App\Jobs\PostInvoiceJob;
 use App\Contracts\InvoiceService;
 use App\Services\EmailExtratorService;
+use App\Services\TestJsonService;
 use App\Services\ImapConnectionService;
 use Webklex\IMAP\Client;
 use App\Http\Controllers\Controller;
@@ -20,11 +21,24 @@ class ImapController extends Controller
 
       //Requisição de Serviço para conectar Caixa postal via IMAP
       $oClient = $serviceConnection->connectionImap();
+      $oClient == false ? $nMensagens = 0 : $nMensagens = $oClient->countMessages();
+
+      //verifica se existem mensagens para serem tratadas      
+      if($nMensagens === 0)
+      {
+         return view('mail', array(
+            "username"     => 'Incoders Tecnologia',
+            'mensagens'    => '',
+            'connection'   => $oClient == false ? false : true
+         ));
+      }
+
+      //Definir diretorio de downloads anexos
+      $savedir = public_path('imap-anexos/');
 
       //Obter todas as pastas de correio
       $aFolder = $oClient->getFolders();
-
-      //Percorrer todas as pastas de correio
+      //Percorrer todas as pastas do correio
       foreach($aFolder as $oFolder)
       {
 
@@ -32,93 +46,67 @@ class ImapController extends Controller
          $aMessage = $oFolder->messages()->all()->get();         
          $i = 0;
          $l = 0;
+         $x = 0;
 
          foreach($aMessage as $oMessage)
          {
+            $nAnexos = $oMessage->getAttachments()->count();
+            if ($nAnexos === 0) { // pula email sem anexo
+               continue;
+            }
             
-            //Captura o conteudo corpo do e-mail
-            $content = $oMessage->getTextBody(true);
-            //Requisição de Serviço para realizar o tratamento dos dados do e-mail
-            $data[$l] = $serviceExtrator->extract($content);
-            $l++;
-            
-            // Estudar Jobs
-            //dispatch(new PostInvoiceJob($data));
+            //Obtem anexos da mensagem
+            $aAttachments =  $oMessage->getAttachments();
+            //percorre os anexos
+            foreach($aAttachments as $attachment)
+            {
+               
+               //Realiza o download do anexo e salva no diretório temporário
+               $anexo = $attachment->getFilename();
+               $attachment->save($savedir, $anexo, true);
 
-            /*
-            echo 'Attachments: '.$oMessage->getAttachments()->count().'<br />';
-            */
-            
+               //Converte o arquivo salvo em base64
+               $nomeAnexo  = $attachment->getName();
+               $localPath  = $savedir . $nomeAnexo;
+               $b64[$x]    = base64_encode(file_get_contents($localPath));
+
+               //Excluir arquivo temporário
+               unlink($localPath);
+
+            }
+
+            //Captura o conteudo corpo do e-mail
+            $content    = $oMessage->getTextBody(true);
+            //Requisição de Serviço para realizar o tratamento dos dados do e-mail
+            $data[$l]   = $serviceExtrator->extract($content);
+            //Incremento contadores
+            $l++;
+            $x++;
             $i++;
-            $marks[$i] = array(
+            $mensagens[$i] = array(
                'nome'         => $oMessage->getFrom()[0]->mail,
                'assunto'      => $oMessage->getSubject(),
-               'dateReceived' => $oMessage->getDate()->format(DATE_RFC2822),
-               'data'         => $data
+               'dateReceived' => $oMessage->getDate()->format(DATE_RFC2822)
             ); 
 
-            //Mova a mensagem atual para 'Emails Lidos'
-            /*if($oMessage->moveToFolder('INBOX.read') == true){
-                  echo 'Message has ben moved';
+            //Move a mensagem atual para 'Emails Lidos'
+            /* if($oMessage->moveToFolder('INBOX.read') == true){
+               echo 'Message has ben moved';
             }else{
-                  echo 'Não foi possível mover a mensagem';
+               echo 'Não foi possível mover a mensagem';
             }*/
+
          }
       }
 
-      for ($i=0; $i < count($data); $i++) { 
-         $dataRow[$i] = implode("|", $data[$i]);
-      }
-
       return view('mail', array(
-         'userSummaries'   => $marks,
-         'data'            => $data,
-         'dataRow'         => $dataRow,
+         'mensagens'    => isset($mensagens) ? $mensagens : '',
+         'data'         => isset($data)      ? $data : '',
+         'anexo'        => isset($b64)       ? $b64 : '',
+         "username"     => 'Incoders Tecnologia',
+         'connection'   => true
       ));
    }
-
-   public function email(EmailExtratorService $extrator)
-   {
-      $email = '
-      Bom dia,
-      Segue meus dados de contato e informações para pagamento 
-      
-      Nome: Guarida Imóveis
-      Endereço: Protásio alves, 1309
-      Valor: R$ 1.800,50
-      Vencimento:12/19
-      
-      Att.
-      ';
-
-      $data = $extrator->extract($email);
-
-      dispatch(new PostInvoiceJob($data));
-
-      dd($data);
-   }
-
-
-   public function send()
-   {
-      dd('entrou no controller');
-      $email = '
-      Bom dia,
-      Segue meus dados de contato e informações para pagamento 
-      
-      Nome: Guarida Imóveis
-      Endereço: Protásio alves, 1309
-      Valor: R$ 1.800,50
-      Vencimento:12/19
-      
-      Att.
-      ';
-
-      $data = $extrator->extract($email);
-      dispatch(new PostInvoiceJob($data));
-      dd($data);
-   }
-
 
    /**
    * Create a new controller instance.
@@ -130,30 +118,36 @@ class ImapController extends Controller
       return view('ajaxRequest');
    }
 
-   
-
    /**
    * Create a new controller instance.
    *
    * @return void
    */
-   public function ajaxRequestPost(EmailExtratorService $serviceExtrator, Request $request)
+   public function ajaxRequestPost(EmailExtratorService $serviceExtrator, TestJsonService $serviceJson, Request $request)
    {
-      /*echo("ajaxrequestpost");
-      die;*/
-      $input = $request->all();
+      $input         = $request->all();
+      $string_json   = json_encode($input);
 
-      $data = $extrator->extract($input);
+      $returnJson = $serviceJson->isJson($string_json);
+      //verifica se retornou mensagem de erro da validacao do Parsing Json
+      if(is_string ( $returnJson )) 
+      {
+         $response = array(
+            'status' => 'fail',
+            'msg'    => $returnJson,
+         );         
+         return response()->json(['success'=>$returnJson]);
+      }
 
-      dd($data);
-      dispatch(new PostInvoiceJob($data));
-
-      dd($input);
+      $returnJson = json_decode($string_json, true);
+      //envia dados para fila de job de execução, liberando o usuário
+      dispatch(new PostInvoiceJob($returnJson));
+ 
       $response = array(
          'status' => 'success',
-         'msg'    => 'Setting created successfully',
+         'msg'    => 'Processo de Envio',
       );
-      return response()->json(['success'=>'Got Simple Ajax Request.']);
+      return response()->json(['success'=>'Processo de Envio para API Rest Realizado com Sucesso.']);
    }
 
 }

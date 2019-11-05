@@ -20,7 +20,6 @@ class EmailExtratorService
 
    public function extract($content)
    {
-      
       return (new Collection(explode("\n", $content)))->mapWithKeys(function ($line) {
          $line = trim($line);
 

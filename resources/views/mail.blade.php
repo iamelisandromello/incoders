@@ -6,12 +6,12 @@
          <h1 class="panel-title">Caixa Postal</h1>
       </div>
       <div class="panel-body">
-         Aqui os 10 mais recentes emails.
+         Emails para Gerenciamento.
       </div>
       <div class="list-group">
-         <?php if (isset($userSummaries)) {
+         <?php if ($mensagens != '') {
          $j=0;
-         foreach($userSummaries as $message) { 
+         foreach($mensagens as $message) { 
             ?>
             <div class="list-group-item">
                <h3 class="list-group-item-heading">
@@ -22,22 +22,29 @@
                </h4>
                <p class="list-group-item-heading text-muted">
                   <em>Received: <?php echo $message["dateReceived"] ?></em>
-                  <?php $varSplit = implode("|", $data[$j]);?>
+                  <?php 
+                     $dadosSplit = implode("|", $data[$j]);?>
                   <span class="t-right">
-                     <a class="btn btn-sm btn-primary btn-envio" role="button" id="enviarDados"  onclick="enviar('<?php echo $varSplit;?>',this)"  >Enviar</a>
+                     <a class="btn btn-sm btn-primary btn-envio" role="button" id="enviarDados"  onclick="enviar('<?php echo $dadosSplit;?>', '<?php echo $anexo[$j];?>', this)">Enviar</a>
                   </span>
                </p>
-
-               <input type="hidden" name="nome"      id="nome"       value="<?php  echo $data[$j]['nome']; ?>" />
-               <input type="hidden" name="endereco"  id="endereco"   value="<?php  echo $data[$j]['endereco']; ?>" />
-               <input type="hidden" name="valor"     id="valor"      value="<?php  echo $data[$j]['valor']; ?>" />
-               <input type="hidden" name="vencimento" id="vencimento" value="<?php  echo $data[$j]['vencimento']; ?>" />
                <?php $j++ ?>
                <hr>
 
             </div>
          <?php  }
-         } ?>
+         } else { ?>
+            <div class="col-md-12">
+               <div id="capaefectos" class="alert alert-primary">
+                  <?php if ($connection == true) { ?>
+                     Não existem mensagens para serem analisadas e enviadas <a href="./" class="alert-link">Clique aqui</a> para retornar.
+                  <?php } else { ?>
+                     Não foi possível realizar a conexão com a Caixa Postal, tente mais tarde. <a href="./" class="alert-link">Clique aqui</a> para retornar.
+                  <?php ; } ?>   
+               </div><!-- </capaefectos> -->
+            </div>
+         <?php } ?>
+
       </div>
    </div>
 @endsection

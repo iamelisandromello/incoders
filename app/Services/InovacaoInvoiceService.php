@@ -17,14 +17,21 @@ class InovacaoInvoiceService implements InvoiceService
 
    public function postInvoice($data)
    {
-      return true;
       
-      try {
-         $this->http->request('POST', 'https://api.email.com/v1/invoice', $data);
-      } catch (Throwable $throwable) {
+      //return true;
+      try 
+      {     
+         
+         $res= $this->http->request('POST', 'http://localhost:3000/email', $data);
+
+      } catch (Throwable $throwable) 
+      {
+         
          return false;
+         
       }
 
       return true;
    }
+
 }

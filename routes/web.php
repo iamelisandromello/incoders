@@ -16,9 +16,6 @@ Route::get('/', function () {
 });
 
 Route::get('/signin' , 'ImapController@signin');
-Route::get('/send'   , 'ImapController@send');
-Route::get('/email'  , 'ImapController@email');
-
 
 Route::get('ajaxRequest', 'ImapController@ajaxRequest');
 Route::post('ajaxRequest', 'ImapController@ajaxRequestPost');
