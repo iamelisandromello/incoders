@@ -10,9 +10,6 @@ class TestJsonService
    public function isJson($data)
    {
       $response = '';
-
-      //esta string não está bem-formada, pois o valor M não está entre aspas
-      //$json_str = '{"nome":"Jason Jones", "idade":38, "sexo": M}';
       
       //faz o parsing na string, gerando um objeto PHP
       $obj = json_decode($data);

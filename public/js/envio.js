@@ -1,4 +1,5 @@
-$(function(){
+$(function()
+{
    $.ajaxSetup({
       headers: 
       {
@@ -7,9 +8,11 @@ $(function(){
    });
 });
 
-function enviar(dadosSplit, anexo, obj) {
+function enviar(dadosSplit, anexo, obj) 
+{
 
-   if(dadosSplit != '') {
+   if(dadosSplit != '')
+   {
 
       dado  = dadosSplit.split("|");
 
@@ -50,9 +53,10 @@ function enviar(dadosSplit, anexo, obj) {
 }
 
 
-function triggerNotify() {
+function triggerNotify() 
+{
    var data = [];
-   data['title'] = 'Eeei desistiu da requisição? ' + ' OK Fica para Depois!!!';
+   data['title'] = 'Dados enviados para API Rest. ' + ' Processo realizado com sucesso!!!';
    data['icon'] = "icon-bubble";
    data['color'] = "purple";
    data['timer'] = 3000;
@@ -62,21 +66,26 @@ function triggerNotify() {
    triggerContent += "<span class='trigger_notify_timer'></span>";
    triggerContent += "</div>";
 
-   if(!$('.trigger_notify_box').length){
+   if(!$('.trigger_notify_box').length)
+   {
        $('body').prepend("<div class='trigger_notify_box'></div>");
    }
 
    $('.trigger_notify_box').prepend(triggerContent);
-   $('.trigger_notify').stop().animate({'left': '0', 'opacity': '1'}, 200, function(){
-       $(this).find('.trigger_notify_timer').animate({'width': '100%'}, data.timer, 'linear', function(){
+   $('.trigger_notify').stop().animate({'left': '0', 'opacity': '1'}, 200, function()
+   {
+       $(this).find('.trigger_notify_timer').animate({'width': '100%'}, data.timer, 'linear', function()
+       {
            $(this).parent('.trigger_notify').animate({'left': '100%', 'opacity': '0'}, function(){
                $(this).remove();
            });
        });
    });
 
-   $('body').on('click', '.trigger_notify', function(){
-       $(this).animate({'left': '100%', 'opacity': '0'}, function(){
+   $('body').on('click', '.trigger_notify', function()
+   {
+       $(this).animate({'left': '100%', 'opacity': '0'}, function()
+       {
            $(this).remove();
        });
    });
